@@ -4,8 +4,10 @@ import axios from "axios";
 import { pool } from "../utils/main_db.js";
 import { LiquidityBookServices, MODE } from "@saros-finance/dlmm-sdk";
 import { connection } from "../utils/connection.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const swap = async (userId, from, to, amount) => {
+export const swap = async (userId, from, to, amount, chatId) => {
 
     console.log(`User: ${userId} wants to swap ${from} for ${to}.`);
 
@@ -16,6 +18,14 @@ export const swap = async (userId, from, to, amount) => {
         return "You do not have a wallet yet, please create a wallet first!";
     
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    const reply_from = from === 'WSOL' ? 'SOL' : from;
+
+    const reply_to = to === 'WSOL' ? 'SOL' : to;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: `Swapping ${amount} ${reply_from} for ${reply_to}...`});
 
     const payer = new PublicKey(userRows[0].pubkey);
 
@@ -90,7 +100,7 @@ export const swap = async (userId, from, to, amount) => {
 
     let swapForY;
 
-    if(fromAddress === tokenX && toAddress === tokenY) {
+    if(fromAddress === tokenX.toBase58() && toAddress === tokenY.toBase58()) {
 
         swapForY = true;
     
@@ -104,6 +114,8 @@ export const swap = async (userId, from, to, amount) => {
     console.log("swapforY: ", swapForY);
 
     console.log("TokenX: ", tokenX, " TokenY: ", tokenY);
+
+    console.log("TokenX: ", tokenX.toBase58(), " TokenY: ", tokenY.toBase58());
 
     const quote = await liquidityBookServices.getQuote({
 
@@ -174,5 +186,5 @@ export const swap = async (userId, from, to, amount) => {
         return `Transaction failed: ${e.message || e}`;
     }
 
-    return `${amount} of ${from} has been swapped for ${to}!.\n Transaction Hash: ${sig}`;
+    return `${amount} of ${reply_from} has been swapped for ${reply_to}!\n Transaction Hash: ${sig}`;
 }
