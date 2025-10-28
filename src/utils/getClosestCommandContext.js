@@ -41,7 +41,7 @@ export async function getClosestCommandContext(userMessage) {
         
         command_name: top.payload.command_name,
         
-        command_text: top.payload.embedding_text,
+        command_text: top.payload.systemPrompt,
         
         score: top.score,
     

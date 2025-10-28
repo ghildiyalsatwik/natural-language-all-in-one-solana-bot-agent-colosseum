@@ -6,8 +6,10 @@ import { Transaction, Keypair, SystemProgram } from "@solana/web3.js";
 import sss from "shamirs-secret-sharing";
 import BN from "bn.js";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const mintToken = async (userId, name, symbol, decimals, initial_amount) => {
+export const mintToken = async (userId, name, symbol, decimals, initial_amount, chatId) => {
 
     console.log(`User: ${userId} wants to mint a new token.`);
 
@@ -80,6 +82,10 @@ export const mintToken = async (userId, name, symbol, decimals, initial_amount) 
         return "Please specify the initial amount you want minted to your wallet.";
     
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: `Creating and minting token: ${name}`});
 
     const user_public_key = new PublicKey(rows[0].pubkey);
 

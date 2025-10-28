@@ -16,6 +16,7 @@ import { subscribe } from "./handlers/subscribe.js";
 import { sendBinChart } from "./handlers/sendBinChart.js"; 
 import { managePosition } from "./handlers/managePositions.js";
 import { getClosestCommandContext } from "./utils/getClosestCommandContext.js";
+import { getLLMResponse } from "./utils/getLLMResponse.js";
 
 const app = express();
 
@@ -136,7 +137,7 @@ app.post('/webhook', async (req, res) => {
 
     if(context.command_name === 'create_wallet') {
 
-        const reply = await createWallet(userId);
+        const reply = await createWallet(userId, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 
@@ -161,7 +162,27 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'mint_token') {
 
-        const reply = await mintToken(userId, intent.name, intent.symbol, intent.decimals, intent.initial_amount);
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
+
+        const reply = await mintToken(userId, intent.name, intent.symbol, intent.decimals, intent.initial_amount, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 

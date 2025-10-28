@@ -2,8 +2,10 @@ import sss from "shamirs-secret-sharing";
 import { pool } from "../utils/main_db.js";
 import { Keypair } from "@solana/web3.js";
 import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const createWallet = async (userId) => {
+export const createWallet = async (userId, chatId) => {
 
     console.log(`Create wallet command called by the user: ${userId}`);
 
@@ -14,6 +16,10 @@ export const createWallet = async (userId) => {
         return `You already have a wallet!\nPublic key: ${rows[0].pubkey}`;
     
     } else {
+
+        const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+        await axios.post(BOT_URL, { chat_id: chatId, text: 'Creating a fresh wallet for you!' });
 
         const kp = Keypair.generate();
 
