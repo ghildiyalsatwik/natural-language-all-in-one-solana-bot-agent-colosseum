@@ -4,8 +4,10 @@ import { PublicKey, sendAndConfirmTransaction, Keypair } from "@solana/web3.js";
 import { connection } from "../utils/connection.js";
 import axios from "axios";
 import sss from "shamirs-secret-sharing";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const createPool = async (userId, base_token, quote_token, bin_step, rate_price) => {
+export const createPool = async (userId, base_token, quote_token, bin_step, rate_price, chatId) => {
 
     console.log(`User: ${userId} wants to create a pool.`);
 
@@ -81,6 +83,12 @@ export const createPool = async (userId, base_token, quote_token, bin_step, rate
         return "Please specify rate price.";
     
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    const reply_quote_token = quote_token === 'WSOL' ? 'SOL' : quote_token;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: `Creating pool between ${base_token} and ${reply_quote_token}`});
 
     const userPubkey = new PublicKey(userRows[0].pubkey);
 
@@ -188,6 +196,6 @@ export const createPool = async (userId, base_token, quote_token, bin_step, rate
     await pool.query('INSERT INTO user_pools (pair, base_token, quote_token, bin_step, rate_price, active_bin, bin_array_lower, bin_array_upper, user_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)', [pair, baseMint, quoteMint, binStep, ratePrice, activeBin, binArrayLower, binArrayUpper, userId]);
 
 
-    return `Pool between ${base_token} and ${quote_token} with binStep ${binStep} and ratePrice ${rate_price} has been created at ${pair}!.\nCurrent active bin: ${activeBin}.\n\n Transaction Hash: ${sig}\n Please make reference to this pool to open positions and add liquidity.`;
+    return `Pool between ${base_token} and ${reply_quote_token} with binStep ${binStep} and ratePrice ${rate_price} has been created at ${pair}!.\nCurrent active bin: ${activeBin}.\n\n Transaction Hash: ${sig}\n Please make reference to this pool to open positions and add liquidity.`;
 
 }

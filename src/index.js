@@ -190,7 +190,27 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'create_pool') {
 
-        const reply = await createPool(userId, intent.base_token, intent.quote_token, intent.bin_step, intent.rate_price);
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
+
+        const reply = await createPool(userId, intent.base_token, intent.quote_token, intent.bin_step, intent.rate_price, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 
