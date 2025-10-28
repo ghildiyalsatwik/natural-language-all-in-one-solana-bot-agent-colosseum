@@ -122,7 +122,7 @@ app.post('/webhook', async (req, res) => {
 
     }
 
-    const scoreThreshold = 0.2;
+    const scoreThreshold = 0.45;
 
     if(context.score < scoreThreshold) {
 
@@ -201,7 +201,7 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'eject') {
 
-        const reply = await handleEject(userId);
+        const reply = await handleEject(userId, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 

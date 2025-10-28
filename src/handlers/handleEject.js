@@ -1,8 +1,10 @@
 import { pool } from "../utils/main_db.js";
 import axios from "axios";
 import sss from "shamirs-secret-sharing";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const handleEject = async (userId) => {
+export const handleEject = async (userId, chatId) => {
 
     console.log(`User: ${userId} wants their private key.`);
 
@@ -13,6 +15,10 @@ export const handleEject = async (userId) => {
         return "You do not have a wallet yet, please create a wallet first!";
         
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Retrieving your private key..' });
 
     let responses
 
@@ -34,7 +40,7 @@ export const handleEject = async (userId) => {
 
     }
 
-    console.log(responses);
+    //console.log(responses);
 
     const shares = responses.map(resp => Buffer.from(resp.data.share, 'hex'));
 

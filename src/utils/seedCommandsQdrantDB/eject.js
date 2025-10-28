@@ -33,7 +33,7 @@ if(!exists) {
     console.log(`Collection: ${collectionName} already exists!`);
 }
 
-const text = process.env.CREATE_WALLET_TEXT;
+const text = process.env.EJECT_TEXT;
 
 const embeddingResp = await openai.embeddings.create({
 
@@ -51,15 +51,15 @@ await qdrant.upsert(collectionName, {
 
         {
 
-            id: 1,
+            id: 2,
 
             vector: { default: vector },
 
             payload: {
 
-                command_id: 1,
+                command_id: 2,
 
-                command_name: "create_wallet",
+                command_name: "eject",
                     
                 systemPrompt: ''
             }
@@ -68,4 +68,4 @@ await qdrant.upsert(collectionName, {
 
 });
 
-console.log("Seeded wallet creation command into Qdrant DB.");
+console.log("Seeded eject command into Qdrant DB.");
