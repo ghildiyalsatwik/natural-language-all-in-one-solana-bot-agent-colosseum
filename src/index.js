@@ -218,7 +218,27 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'add_liquidity') {
 
-        const reply = await addLiquidity(userId, intent.pair, intent.shape, intent.base_amount, intent.quote_amount, intent.min_bin, intent.max_bin);
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
+
+        const reply = await addLiquidity(userId, intent.pair, intent.shape, intent.base_amount, intent.quote_amount, intent.min_bin, intent.max_bin, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 

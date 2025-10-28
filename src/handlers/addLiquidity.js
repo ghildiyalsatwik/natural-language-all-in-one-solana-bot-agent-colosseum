@@ -6,12 +6,21 @@ import { LiquidityBookServices, MODE, LiquidityShape, createUniformDistribution 
 import { connection } from "../utils/connection.js";
 import BN from "bn.js";
 import { createAssociatedTokenAccountInstruction, getAssociatedTokenAddress, getAccount } from "@solana/spl-token";
+import dotenv from "dotenv";
+dotenv.config();
+import { cleanAmount } from "../utils/cleanAmount.js";
 
-export const addLiquidity = async (userId, pair, shape, base_amount, quote_amount, min_bin, max_bin) => {
+export const addLiquidity = async (userId, pair, shape, base_amount_temp, quote_amount_temp, min_bin, max_bin, chatId) => {
 
     console.log(`User: ${userId} wants to open a position.`);
 
     console.log(`shape: ${shape}, min_bin: ${min_bin}, max_bin: ${max_bin}`);
+
+    const base_amount = cleanAmount(base_amount_temp);
+
+    const quote_amount = cleanAmount(quote_amount_temp);
+
+    console.log(base_amount, quote_amount);
 
     const { rows: userRows } = await pool.query('SELECT pubkey FROM users where telegram_user_id = $1;', [userId]);
 
@@ -132,6 +141,11 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
         return "Please specify the maximum bin offset.";
     }
 
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Opening your position...'});
+
+
     const { rows: pairRows } = await pool.query('SELECT pair, quote_token, base_token from pools where pair = $1;', [pair]);
 
     if(pairRows.length === 0) {
@@ -141,6 +155,13 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
     }
 
     const quote_address = pairRows[0].quote_token;
+
+    let reply_quote_token;
+
+    if(quote_address === 'So11111111111111111111111111111111111111112') {
+
+        reply_quote_token = 'SOL';
+    }
 
     const base_address = pairRows[0].base_token;
 
@@ -326,6 +347,8 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
     
     console.log("Position PDA:", positionPDA.toBase58(), "Owner:", acc.owner.toBase58());
 
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Position created!'});
+
     const binRange = [minBin, maxBin];
 
     const finalShape = (shape === 'uniform' || shape === 'spot') ? LiquidityShape.Spot : shape === 'curve' ? LiquidityShape.Curve : LiquidityShape.BidAsk;
@@ -423,12 +446,14 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
 
     } catch(err) {
 
-        return "The Saros DLMM bot could not parse the amounts you entered. Please try again!";
+        return "The all-in-one Solana bot could not parse the amounts you entered. Please try again!";
     }
 
     const addTx = new Transaction();
 
     console.log('Creating the final add liquidity tx.');
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Adding liquidity into created position...'});
 
     console.log(binArrayLower, binArrayUpper);
     
@@ -461,6 +486,8 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
     const sig = await sendAndConfirmTransaction(connection, addTx, [senderKeypair]);
     
     console.log("Liquidity added! Tx:", sig);
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Liquidity has been added to your position!'});
 
     const posAcc = await liquidityBookServices.lbProgram.account.position.fetch(positionPDA);
     
@@ -504,8 +531,7 @@ export const addLiquidity = async (userId, pair, shape, base_amount, quote_amoun
         ]
   
     );
-  
     
-    return `Liquidity added successfully!\nTx: ${sig}\nYour Position PDA: ${positionPDA.toBase58()} and your position NFT: ${positionNFT.publicKey.toBase58()}\n Please refer to this position PDA to add or remove liquidity from this position`;
+    return `Liquidity added successfully!\nTransaction Hash: ${sig}\nYour Position PDA address: ${positionPDA.toBase58()} and your position NFT address: ${positionNFT.publicKey.toBase58()}\n Please refer to this position PDA to add or remove liquidity from this position`;
 
 }
