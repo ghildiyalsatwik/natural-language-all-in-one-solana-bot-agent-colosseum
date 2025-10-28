@@ -2,12 +2,10 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import { startHandler } from "./handlers/start.js";
-import { handleError } from "./handlers/error.js";
 import { handleDefault } from "./handlers/default.js";
 import { createWallet } from "./handlers/createWallet.js";
 import { getSOLBalance } from "./handlers/SOLBalance.js";
 import axios from "axios";
-import fetch from "node-fetch";
 import { mintToken } from "./handlers/mintToken.js";
 import { createPool } from "./handlers/createPool.js";
 import { addLiquidity } from "./handlers/addLiquidity.js";
@@ -17,6 +15,7 @@ import { handleEject } from "./handlers/handleEject.js";
 import { subscribe } from "./handlers/subscribe.js";
 import { sendBinChart } from "./handlers/sendBinChart.js"; 
 import { managePosition } from "./handlers/managePositions.js";
+import { getClosestCommandContext } from "./utils/getClosestCommandContext.js";
 
 const app = express();
 
@@ -42,7 +41,7 @@ app.post('/webhook', async (req, res) => {
 
     const chatId = msg.chat.id;
 
-    console.log(userId, userMessage);
+    console.log("User id: ", userId, " , User message: ", userMessage);
 
 
     if(userMessage === '/start') {
@@ -57,53 +56,65 @@ app.post('/webhook', async (req, res) => {
 
     if(userMessage === 'I lost all my money yesterday') {
 
-        await axios.post(BOT_URL, { chat_id: chatId, text: 'Skill issue' });
+        await axios.post(BOT_URL, { chat_id: chatId, text: 'Skill issue.' });
 
         return res.sendStatus(200);
 
     }
 
-    const systemPrompt = process.env.SYSTEM_PROMPT.replace(/\\n/g, "\n");
+    // const systemPrompt = process.env.SYSTEM_PROMPT.replace(/\\n/g, "\n");
 
-    const finalPrompt = `###System: ${systemPrompt} ###User : ${userMessage}`;
+    // const finalPrompt = `###System: ${systemPrompt} ###User : ${userMessage}`;
 
-    const inferenceUrl = process.env.INFERENCE_URL;
+    // const inferenceUrl = process.env.INFERENCE_URL;
 
-    const model = process.env.MODEL;
+    // const model = process.env.MODEL;
 
-    const llmResp = await fetch(inferenceUrl, {
+    // const llmResp = await fetch(inferenceUrl, {
         
-        method: 'POST',
+    //     method: 'POST',
         
-        headers: { 'Content-Type': 'application/json' },
+    //     headers: { 'Content-Type': 'application/json' },
         
-        body: JSON.stringify({
+    //     body: JSON.stringify({
           
-            model: model,
+    //         model: model,
           
-            prompt: finalPrompt,
+    //         prompt: finalPrompt,
           
-            stream: false
+    //         stream: false
         
-        })
+    //     })
     
-    });
+    // });
 
-    const json = await llmResp.json();
+    // const json = await llmResp.json();
 
-    const llmOutput = json.response.trim();
+    // const llmOutput = json.response.trim();
 
-    let intent;
+    // let intent;
 
-    try {
+    // try {
 
-        intent = JSON.parse(llmOutput);
+    //     intent = JSON.parse(llmOutput);
     
-    } catch(e) {
+    // } catch(e) {
 
-        console.log('Could not parse the LLM response as a JSON object.');
+    //     console.log('Could not parse the LLM response as a JSON object.');
 
-        const reply = handleError();
+    //     const reply = handleError();
+
+    //     await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+    //     return res.sendStatus(200);
+
+    // }
+
+    const context = await getClosestCommandContext(userMessage);
+
+    if(!context) {
+
+        const reply = handleDefault(userId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 
@@ -111,7 +122,19 @@ app.post('/webhook', async (req, res) => {
 
     }
 
-    if(intent.command === 'create_wallet') {
+    const scoreThreshold = 0.2;
+
+    if(context.score < scoreThreshold) {
+
+        const reply = handleDefault(userId);
+
+        await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+        return res.sendStatus(200);
+
+    }
+
+    if(context.command_name === 'create_wallet') {
 
         const reply = await createWallet(userId);
 
@@ -119,7 +142,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'get_balance' && intent.token === '') {
+    } else if(context.command_name === 'get_balance' && intent.token === '') {
 
         console.log('The user did not specify the token whose balance they wanted to check.');
 
@@ -128,7 +151,7 @@ app.post('/webhook', async (req, res) => {
         return res.sendStatus(200);
 
 
-    } else if(intent.command === 'get_balance' && intent.token === 'SOL') {
+    } else if(context.command_name === 'get_balance' && intent.token === 'SOL') {
 
         const reply = await getSOLBalance(userId);
 
@@ -136,7 +159,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'mint_token') {
+    } else if(context.command_name === 'mint_token') {
 
         const reply = await mintToken(userId, intent.name, intent.symbol, intent.decimals, intent.initial_amount);
 
@@ -144,7 +167,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'create_pool') {
+    } else if(context.command_name === 'create_pool') {
 
         const reply = await createPool(userId, intent.base_token, intent.quote_token, intent.bin_step, intent.rate_price);
 
@@ -152,7 +175,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'add_liquidity') {
+    } else if(context.command_name === 'add_liquidity') {
 
         const reply = await addLiquidity(userId, intent.pair, intent.shape, intent.base_amount, intent.quote_amount, intent.min_bin, intent.max_bin);
 
@@ -160,7 +183,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'swap') {
+    } else if(context.command_name === 'swap') {
 
         const reply = await swap(userId, intent.from, intent.to, intent.amount);
 
@@ -168,7 +191,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'remove_liquidity') {
+    } else if(context.command_name === 'remove_liquidity') {
 
         const reply = await removeLiquidity(userId, intent.position_pda);
 
@@ -176,7 +199,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'eject') {
+    } else if(context.command_name === 'eject') {
 
         const reply = await handleEject(userId);
 
@@ -184,7 +207,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'subscribe') {
+    } else if(context.command_name === 'subscribe') {
 
         const reply = await subscribe(userId, intent.pair, chatId);
 
@@ -192,7 +215,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'chart_liquidity') {
+    } else if(context.command_name === 'chart_liquidity') {
 
         if(intent.pair === '') {
 
@@ -206,7 +229,7 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(intent.command === 'manage_position') {
+    } else if(context.command_name === 'manage_position') {
 
         if(intent.position_pda === '') return 'Please specify the position you want to manage automatically!';
 
