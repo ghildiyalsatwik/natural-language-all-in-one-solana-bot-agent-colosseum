@@ -143,22 +143,45 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
-    } else if(context.command_name === 'get_balance' && intent.token === '') {
+    } else if(context.command_name === 'get_balance') {
 
-        console.log('The user did not specify the token whose balance they wanted to check.');
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
 
-        await axios.post(BOT_URL, { chat_id: chatId, text: 'Please specify the token whose balance you want to check.' });
+        let intent;
 
-        return res.sendStatus(200);
+        try {
 
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
 
-    } else if(context.command_name === 'get_balance' && intent.token === 'SOL') {
+            console.log('Could not parse the LLM response as a JSON object.');
 
-        const reply = await getSOLBalance(userId);
+            const reply = handleError();
 
-        await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 
-        return res.sendStatus(200);
+            return res.sendStatus(200);
+
+        }
+
+        if(intent.token === '') {
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: 'Please specify the token whose balance you want me to check.' });
+
+            return res.sendStatus(200);
+
+        }
+
+        if(intent.token === 'SOL') {
+
+            const reply = await getSOLBalance(userId, chatId);
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
 
     } else if(context.command_name === 'mint_token') {
 

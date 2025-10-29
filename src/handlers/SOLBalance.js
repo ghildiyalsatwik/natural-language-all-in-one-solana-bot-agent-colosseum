@@ -1,8 +1,11 @@
 import { connection } from "../utils/connection.js";
 import { pool } from "../utils/main_db.js";
 import { PublicKey } from "@solana/web3.js";
+import dotenv from "dotenv";
+dotenv.config();
+import axios from "axios";
 
-export const getSOLBalance = async (userId) => {
+export const getSOLBalance = async (userId, chatId) => {
 
     console.log(`User: ${userId} wants to check their SOL balance.`);
 
@@ -13,6 +16,10 @@ export const getSOLBalance = async (userId) => {
         return "You do not have a wallet yet, please create a wallet first!";
     
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Fetching your SOL balance...'});
 
     const user_public_key = new PublicKey(rows[0].pubkey);
 
