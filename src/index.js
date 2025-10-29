@@ -400,6 +400,11 @@ app.post('/webhook', async (req, res) => {
 
         return res.sendStatus(200);
 
+    } else if(context.command_name === 'limit_order') {
+
+        await axios.post(BOT_URL, { chat_id: chatId, text: 'Limit order being inferred correctly.' });
+
+        return res.sendStatus(200);
 
     } else {
 
