@@ -274,7 +274,27 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'remove_liquidity') {
 
-        const reply = await removeLiquidity(userId, intent.position_pda);
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
+
+        const reply = await removeLiquidity(userId, intent.position_pda, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
 
@@ -290,6 +310,26 @@ app.post('/webhook', async (req, res) => {
 
     } else if(context.command_name === 'subscribe') {
 
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
+
         const reply = await subscribe(userId, intent.pair, chatId);
 
         await axios.post(BOT_URL, { chat_id: chatId, text: reply });
@@ -297,6 +337,26 @@ app.post('/webhook', async (req, res) => {
         return res.sendStatus(200);
 
     } else if(context.command_name === 'chart_liquidity') {
+
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
 
         if(intent.pair === '') {
 
@@ -311,6 +371,26 @@ app.post('/webhook', async (req, res) => {
         return res.sendStatus(200);
 
     } else if(context.command_name === 'manage_position') {
+
+        const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        let intent;
+
+        try {
+
+            intent = JSON.parse(llmOutput);
+        
+        } catch(e) {
+
+            console.log('Could not parse the LLM response as a JSON object.');
+
+            const reply = handleError();
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: reply });
+
+            return res.sendStatus(200);
+
+        }
 
         if(intent.position_pda === '') return 'Please specify the position you want to manage automatically!';
 

@@ -4,8 +4,10 @@ import sss from "shamirs-secret-sharing";
 import axios from "axios";
 import { LiquidityBookServices, MODE } from "@saros-finance/dlmm-sdk";
 import { connection } from "../utils/connection.js";
+import dotenv from "dotenv";
+dotenv.config();
 
-export const removeLiquidity = async (userId, positionPDA) => {
+export const removeLiquidity = async (userId, positionPDA, chatId) => {
 
     const { rows: userRows } = await pool.query('SELECT pubkey FROM users where telegram_user_id = $1;', [userId]);
     
@@ -23,6 +25,10 @@ export const removeLiquidity = async (userId, positionPDA) => {
     }
 
     console.log(`User: ${userId} wants to remove their liquidity from position: ${positionPDA}.`);
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Removing your liquidity from mentioned position...'});
 
     const { rows: positionRows } = await pool.query("SELECT pair, position_nft, min_bin, max_bin, base_token, quote_token from user_positions_history where position_pda = $1 and user_id = $2", [positionPDA, userId]);
 

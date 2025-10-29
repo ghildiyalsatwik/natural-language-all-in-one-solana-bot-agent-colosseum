@@ -2,6 +2,9 @@ import { PublicKey } from "@solana/web3.js";
 import { pool } from "../utils/main_db.js";
 import { LiquidityBookServices, MODE } from "@saros-finance/dlmm-sdk";
 import { connection } from "../utils/connection.js";
+import dotenv from "dotenv";
+dotenv.config();
+import axios from "axios";
 
 export const managePosition = async (userId, chatId, positionPDA) => {
 
@@ -22,6 +25,10 @@ export const managePosition = async (userId, chatId, positionPDA) => {
         return "This position either never existed or has been closed! Please try a different position";
     
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chatId, text: 'Initiating service to automatically manage this position for you...'});
 
     const liquidityBookServices = new LiquidityBookServices({
         
@@ -72,6 +79,6 @@ export const managePosition = async (userId, chatId, positionPDA) => {
     
     );
 
-    return `Saros DLLM bot will manage this position for you automatically.\nThe current active bin is: ${activeBin}\nCurrent slot is: ${currentSlot}`;
+    return `All in one Solana bot will manage this position for you automatically.\nThe current active bin is: ${activeBin}\nCurrent slot is: ${currentSlot}`;
 
 }

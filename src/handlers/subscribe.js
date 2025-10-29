@@ -1,6 +1,9 @@
 import { pool } from "../utils/main_db.js";
 import { LiquidityBookServices, MODE } from "@saros-finance/dlmm-sdk";
 import { PublicKey } from "@solana/web3.js";
+import dotenv from "dotenv";
+dotenv.config();
+import axios from "axios";
 
 export const subscribe = async (userId, pair, chat_id) => {
 
@@ -19,6 +22,10 @@ export const subscribe = async (userId, pair, chat_id) => {
 
         return "You have already subscribed to this pool!";
     }
+
+    const BOT_URL = `https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`;
+
+    await axios.post(BOT_URL, { chat_id: chat_id, text: 'Subscribing you to the requested pool...'});
 
     const liquidityBookServices = new LiquidityBookServices({
     
