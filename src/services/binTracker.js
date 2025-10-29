@@ -1,5 +1,4 @@
 import { LiquidityBookServices, MODE } from "@saros-finance/dlmm-sdk";
-import { connection } from "../utils/connection.js";
 import { pool } from "../utils/main_db.js";
 import bot from "../utils/bot.js";
 import { PublicKey } from "@solana/web3.js";

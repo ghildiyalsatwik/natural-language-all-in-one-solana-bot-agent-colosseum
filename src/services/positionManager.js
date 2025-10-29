@@ -84,6 +84,8 @@ export const manageUserPositionsService = async () => {
 
             console.log(`Position ${position_pda} moved from ${last_active_bin} to ${activeBin}, closing older position and opening a new one.`);
 
+            bot.sendMessage(Number(chat_id), `Active bin for your position: ${position_pda} has shifted from ${last_active_bin} to ${activeBin}, trying to close your older position`);
+            
             await pool.query("DELETE FROM manage_user_positions WHERE position_pda = $1", [position_pda]);
 
             console.log(`Deleted ${position_pda} from management table.`);
@@ -196,6 +198,8 @@ export const manageUserPositionsService = async () => {
             await bot.sendMessage(Number(chat_id), `Position: ${position_pda} closed. Old active bin was ${last_active_bin}, new active bin is: ${activeBin}`);
 
             console.log(`Trying to open a new position around the new active bin: ${activeBin}`);
+
+            await bot.sendMessage(Number(chat_id), `Trying to open a new position for you around the new active bin.`);
 
             const { rows: quoteRows } = await pool.query("SELECT decimals from tokens where mint_address = $1;", [quote_token]);
 
@@ -387,6 +391,8 @@ export const manageUserPositionsService = async () => {
             
             console.log("Position PDA:", positionPDA.toBase58(), "Owner:", acc.owner.toBase58());
 
+            await bot.sendMessage(Number(chat_id), `New position: ${positionPDA} has been created.`);
+
             const binRange = [minBin, maxBin];
 
             console.log(binRange);
@@ -484,7 +490,7 @@ export const manageUserPositionsService = async () => {
 
             } catch(err) {
 
-                bot.sendMessage(Number(chat_id), "The Saros DLMM bot could not parse the amounts you entered. Please try again!");
+                bot.sendMessage(Number(chat_id), "The all-ine-one Solana bot could not parse the amounts you entered. Please try again!");
 
                 continue;
             }
@@ -494,6 +500,8 @@ export const manageUserPositionsService = async () => {
             console.log('Creating the final add liquidity tx.');
 
             console.log(binArrayLower, binArrayUpper);
+
+            await bot.sendMessage(Number(chat_id), `Adding liquidity to this new position.`);
 
             await liquidityBookServices.addLiquidityIntoPosition({
       
@@ -535,13 +543,13 @@ export const manageUserPositionsService = async () => {
 
             }
             
-            console.log("Liquidity added! Tx:", sig);
+            console.log("Liquidity added! Transaction Hash:", sig);
         
             const posAcc = await liquidityBookServices.lbProgram.account.position.fetch(positionPDA);
             
             console.log("Position liquidity shares:", posAcc.liquidityShares);
 
-            bot.sendMessage(Number(chat_id), `A similar position has been opened and liquidity added successfully around the new active bin: ${activeBin}!\nTx: ${sig}\nYour Position PDA: ${positionPDA.toBase58()}.\nYour position NFT: ${positionNFT.publicKey.toBase58()}\n Please refer to this position PDA to add or remove liquidity from this position`);
+            bot.sendMessage(Number(chat_id), `A similar position has been opened and liquidity added successfully around the new active bin: ${activeBin}!\nTransaction Hash: ${sig}\nYour Position PDA address: ${positionPDA.toBase58()}.\nYour position NFT address: ${positionNFT.publicKey.toBase58()}\n Please refer to this position PDA to add or remove liquidity from this position`);
 
         } else {
 
