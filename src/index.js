@@ -17,6 +17,7 @@ import { sendBinChart } from "./handlers/sendBinChart.js";
 import { managePosition } from "./handlers/managePositions.js";
 import { getClosestCommandContext } from "./utils/getClosestCommandContext.js";
 import { getLLMResponse } from "./utils/getLLMResponse.js";
+import { handleError } from "./handlers/error.js";
 
 const app = express();
 
@@ -123,7 +124,7 @@ app.post('/webhook', async (req, res) => {
 
     }
 
-    const scoreThreshold = 0.45;
+    const scoreThreshold = 0.42;
 
     if(context.score < scoreThreshold) {
 
@@ -214,6 +215,8 @@ app.post('/webhook', async (req, res) => {
     } else if(context.command_name === 'create_pool') {
 
         const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
+
+        console.log(llmOutput);
 
         let intent;
 

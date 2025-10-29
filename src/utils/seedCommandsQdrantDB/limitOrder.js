@@ -33,6 +33,8 @@ if(!exists) {
     console.log(`Collection: ${collectionName} already exists!`);
 }
 
+console.log(process.env.LIMIT_ORDER_PROMPT);
+
 const text = process.env.LIMIT_ORDER_TEXT;
 
 const embeddingResp = await openai.embeddings.create({

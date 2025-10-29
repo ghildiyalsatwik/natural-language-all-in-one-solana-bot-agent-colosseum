@@ -43,6 +43,9 @@ const embeddingResp = await openai.embeddings.create({
     
 });
 
+console.log(process.env.CREATE_POOL_PROMPT);
+console.log(process.env.CREATE_POOL_TEXT);
+
 const vector = embeddingResp.data[0].embedding;
 
 await qdrant.upsert(collectionName, {
