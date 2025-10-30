@@ -18,6 +18,7 @@ import { managePosition } from "./handlers/managePositions.js";
 import { getClosestCommandContext } from "./utils/getClosestCommandContext.js";
 import { getLLMResponse } from "./utils/getLLMResponse.js";
 import { handleError } from "./handlers/error.js";
+import { limitOrder } from "./handlers/limitOrder.js";
 
 const app = express();
 
