@@ -401,6 +401,10 @@ app.post('/webhook', async (req, res) => {
 
         const llmOutput = await getLLMResponse(context.command_text, chatId, userMessage);
 
+        console.log('Got back response from LLM.');
+
+        console.log(llmOutput);
+
         let intent;
 
         try {
@@ -419,7 +423,15 @@ app.post('/webhook', async (req, res) => {
 
         }
 
-        if(intent.position_pda === '') return 'Please specify the position you want to manage automatically!';
+        if(intent.position_pda === '') {
+
+            await axios.post(BOT_URL, { chat_id: chatId, text: 'Please specify the position you want to manage automatically!' });
+
+            return res.sendStatus(200);
+
+        }
+
+        console.log("Calling managePosition!");
 
         const reply = await managePosition(userId, chatId, intent.position_pda);
 
